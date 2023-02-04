@@ -7,6 +7,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -21,7 +22,9 @@ public class JobConfiguration {
 
     @Bean
     public Job helloJob(){
-        return jobBuilderFactory.get("helloJob") //Job을 만들땐 JobBilderFactory를 이용
+        return jobBuilderFactory.get("batchJob") //Job을 만들땐 JobBilderFactory를 이용
+
+                .incrementer(new RunIdIncrementer())
                 .start(helloStep1()) //JOb은 무조건 Step을 가지고 있어야 함
                 .next(helloStep2())
                 .build();
@@ -33,7 +36,7 @@ public class JobConfiguration {
 
 
                     System.out.println("=======================");
-                    System.out.println(">>  Batch!!");
+                    System.out.println(">> Step2  Batch!!");
                     System.out.println("=======================");
                     return RepeatStatus.FINISHED;
                 }).build();
@@ -48,7 +51,7 @@ public class JobConfiguration {
 
 
                         System.out.println("=======================");
-                        System.out.println(">>  Batch!!");
+                        System.out.println(">> Step1 Batch!!");
                         System.out.println("=======================");
 
                         return RepeatStatus.FINISHED; //기본적으로 tasklet은 Step안에서 무한정 돌아감 FINISHED가 있어야 종료됨

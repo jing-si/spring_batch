@@ -21,15 +21,15 @@ public class JobConfiguration {
 
     @Bean
     public Job helloJob(){
-        return jobBuilderFactory.get("helloJob") //Job을 만들땐 JobBilderFactory를 이용
-                .start(helloStep1()) //JOb은 무조건 Step을 가지고 있어야 함
+        return jobBuilderFactory.get("Job")
+                .start(helloStep1())
                 .next(helloStep2())
                 .build();
     }
     @Bean
     public Step helloStep2() {
-        return stepBuilderFactory.get("helloStep2") //Step 생성시에도 StepBuilderFactory 이용
-                .tasklet((stepContribution, chunkContext) -> { //Step안에는 tasklet이 있어야함.
+        return stepBuilderFactory.get("step2")
+                .tasklet((stepContribution, chunkContext) -> {
 
 
                     System.out.println("=======================");
@@ -41,17 +41,14 @@ public class JobConfiguration {
 
     @Bean
     public Step helloStep1(){
-        return stepBuilderFactory.get("helloStep1") //Step 생성시에도 StepBuilderFactory 이용
+        return stepBuilderFactory.get("step1")
                 .tasklet(new Tasklet() {
                     @Override
                     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-
-
                         System.out.println("=======================");
                         System.out.println(">>  Batch!!");
                         System.out.println("=======================");
-
-                        return RepeatStatus.FINISHED; //기본적으로 tasklet은 Step안에서 무한정 돌아감 FINISHED가 있어야 종료됨
+                        return RepeatStatus.FINISHED;
                     }
                 }).build();
 

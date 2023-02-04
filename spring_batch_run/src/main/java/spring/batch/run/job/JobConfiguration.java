@@ -2,7 +2,6 @@ package spring.batch.run.job;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.batch.core.Job;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
@@ -20,33 +19,48 @@ public class JobConfiguration {
     private final StepBuilderFactory stepBuilderFactory;
 
     @Bean
-    public Job helloJob(){
-        return jobBuilderFactory.get("Job")
-                .start(helloStep1())
-                .next(helloStep2())
+    public Job BatchJob(){
+        return jobBuilderFactory.get("BatchJob")
+                .start(step1())
+                .next(step2())
+                .next(step3())
                 .build();
     }
     @Bean
-    public Step helloStep2() {
+    public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((stepContribution, chunkContext) -> {
 
 
                     System.out.println("=======================");
-                    System.out.println(">>  Batch!!");
+                    System.out.println(">>step2  Batch!!");
                     System.out.println("=======================");
                     return RepeatStatus.FINISHED;
                 }).build();
     }
 
     @Bean
-    public Step helloStep1(){
+    public Step step1(){
         return stepBuilderFactory.get("step1")
                 .tasklet(new Tasklet() {
                     @Override
                     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
                         System.out.println("=======================");
-                        System.out.println(">>  Batch!!");
+                        System.out.println(">>step1  Batch!!");
+                        System.out.println("=======================");
+                        return RepeatStatus.FINISHED;
+                    }
+                }).build();
+
+    }
+    @Bean
+    public Step step3(){
+        return stepBuilderFactory.get("step3")
+                .tasklet(new Tasklet() {
+                    @Override
+                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
+                        System.out.println("=======================");
+                        System.out.println(">>step3  Batch!!");
                         System.out.println("=======================");
                         return RepeatStatus.FINISHED;
                     }

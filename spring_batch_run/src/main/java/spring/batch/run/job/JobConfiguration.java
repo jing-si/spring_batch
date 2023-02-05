@@ -1,6 +1,7 @@
 package spring.batch.run.job;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
@@ -12,6 +13,7 @@ import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import spring.batch.run.listener.PassCheckingListener;
 
 @RequiredArgsConstructor
 @Configuration
@@ -24,8 +26,14 @@ public class JobConfiguration {
         return jobBuilderFactory.get("BatchJob")
                 .incrementer(new RunIdIncrementer())
                 .start(step1())
-                .next(step2())
-                .next(step3())
+                .on("FAILED")
+                .to(step2())
+                .on("PASS")
+                //상태 전환을 했는데 만족한 값이 없으면
+                //Job은 실패로 기록됨
+                //그래서 Step은 COMPLETED 인데 JOB은 FAILED
+                .stop()
+                .end()
                 .build();
     }
     @Bean
@@ -37,8 +45,12 @@ public class JobConfiguration {
                     System.out.println("=======================");
                     System.out.println(">>step2  Batch!!");
                     System.out.println("=======================");
+                    stepContribution.setExitStatus(new ExitStatus("PASS"));
                     return RepeatStatus.FINISHED;
-                }).build();
+                })
+                //리스너를 이용한 추가도 가능하다.
+               // .listener(new PassCheckingListener())
+                .build();
     }
 
     @Bean
@@ -50,6 +62,7 @@ public class JobConfiguration {
                         System.out.println("=======================");
                         System.out.println(">>step1  Batch!!");
                         System.out.println("=======================");
+                        stepContribution.setExitStatus(ExitStatus.FAILED);
                         return RepeatStatus.FINISHED;
                     }
                 }).build();

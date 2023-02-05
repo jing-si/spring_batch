@@ -8,9 +8,15 @@ import org.springframework.batch.core.configuration.annotation.JobBuilderFactory
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Arrays;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -23,7 +29,7 @@ public class JobConfiguration {
         return jobBuilderFactory.get("BatchJob")
                 .start(step1())
                 .next(step2())
-                .next(step3())
+                .next(chunkStep())
                 .build();
     }
     @Bean
@@ -66,6 +72,26 @@ public class JobConfiguration {
                     }
                 }).build();
 
+    }
+
+    @Bean
+    public Step chunkStep(){
+        return stepBuilderFactory.get("chunkStep")
+                .<String,String>chunk(10)
+                .reader(new ListItemReader<>(Arrays.asList("item1","item2","item3","item4")))
+                .processor(new ItemProcessor<String, String>() {
+                    @Override
+                    public String process(String item) throws Exception {
+                        return item.toUpperCase();
+                    }
+                })
+                .writer(new ItemWriter<String>() {
+                    @Override
+                    public void write(List<? extends String> items) throws Exception {
+                        items.forEach(item -> System.out.println(item));
+                    }
+                })
+                .build();
     }
 
 

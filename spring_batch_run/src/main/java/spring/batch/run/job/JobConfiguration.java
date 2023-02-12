@@ -6,6 +6,7 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.flow.JobExecutionDecider;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -24,18 +25,26 @@ public class JobConfiguration {
         return jobBuilderFactory.get("BatchJob")
                 .incrementer(new RunIdIncrementer())
                 .start(step1())
-                .next(step2())
-                .next(step3())
+                .next(decider())
+                .from(decider()).on("ODD").to(oddStep())
+                .from(decider()).on("EVNE").to(evenStep())
+                .end()
                 .build();
     }
+
     @Bean
-    public Step step2() {
-        return stepBuilderFactory.get("step2")
+    public JobExecutionDecider decider() {
+        return new CustomDecider();
+    }
+
+    @Bean
+    public Step evenStep() {
+        return stepBuilderFactory.get("evenStep")
                 .tasklet((stepContribution, chunkContext) -> {
 
 
                     System.out.println("=======================");
-                    System.out.println(">>step2  Batch!!");
+                    System.out.println(">>evenStep  Batch!!");
                     System.out.println("=======================");
                     return RepeatStatus.FINISHED;
                 }).build();
@@ -56,13 +65,13 @@ public class JobConfiguration {
 
     }
     @Bean
-    public Step step3(){
-        return stepBuilderFactory.get("step3")
+    public Step oddStep(){
+        return stepBuilderFactory.get("oddStep")
                 .tasklet(new Tasklet() {
                     @Override
                     public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
                         System.out.println("=======================");
-                        System.out.println(">>step3  Batch!!");
+                        System.out.println(">>oddStep  Batch!!");
                         System.out.println("=======================");
                         return RepeatStatus.FINISHED;
                     }

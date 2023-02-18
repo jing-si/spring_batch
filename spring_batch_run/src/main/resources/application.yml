@@ -33,3 +33,19 @@ spring:
       initialize-schema: never
     job:
       enabled: true
+  —
+spring:
+  config:
+    activate:
+      on-profile: youngwonhe2
+  datasource:
+    hikari:
+      jdbc-url: jdbc:mariadb://nodejs-013.cafe24.com:3306/youngwonhe2?useUnicode=true&characterEncoding=utf8
+      username: youngwonhe2
+      password: luna12!!
+      driver-class-name: org.mariadb.jdbc.Driver
+  batch:
+    jdbc:
+      initialize-schema: never
+    job:
+      enabled: true

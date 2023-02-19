@@ -9,9 +9,14 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.Arrays;
 
 @RequiredArgsConstructor
 @Configuration
@@ -24,50 +29,39 @@ public class JobConfiguration {
         return jobBuilderFactory.get("BatchJob")
                 .incrementer(new RunIdIncrementer())
                 .start(step1())
-                .next(step2())
-                .next(step3())
                 .build();
     }
-    @Bean
-    public Step step2() {
-        return stepBuilderFactory.get("step2")
-                .tasklet((stepContribution, chunkContext) -> {
 
-
-                    System.out.println("=======================");
-                    System.out.println(">>step2  Batch!!");
-                    System.out.println("=======================");
-                    return RepeatStatus.FINISHED;
-                }).build();
-    }
 
     @Bean
     public Step step1(){
         return stepBuilderFactory.get("step1")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("=======================");
-                        System.out.println(">>step1  Batch!!");
-                        System.out.println("=======================");
-                        return RepeatStatus.FINISHED;
-                    }
-                }).build();
+                .<Customer,Customer>chunk(3)
+                .reader(itemReader())
+                .processor(itemProcessor())
+                .writer(itemWriter())
+                .build();
 
     }
-    @Bean
-    public Step step3(){
-        return stepBuilderFactory.get("step3")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("=======================");
-                        System.out.println(">>step3  Batch!!");
-                        System.out.println("=======================");
-                        return RepeatStatus.FINISHED;
-                    }
-                }).build();
 
+    @Bean
+    public ItemWriter<? super Customer> itemWriter() {
+        return new CustomItemWriter();
+    }
+
+    @Bean
+    public ItemProcessor<? super Customer, ? extends Customer> itemProcessor() {
+        return new CustomItemProcessor();
+    }
+
+
+    @Bean
+    public ItemReader<Customer> itemReader() {
+        return new CustomItemReader(Arrays.asList(new Customer("user1"),
+                new Customer("user1"),
+                new Customer("user2"),
+                new Customer("user3")
+        ));
     }
 
 

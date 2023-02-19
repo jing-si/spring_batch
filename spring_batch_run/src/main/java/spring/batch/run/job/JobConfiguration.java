@@ -6,6 +6,8 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
+import org.springframework.batch.core.job.builder.FlowBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -23,10 +25,26 @@ public class JobConfiguration {
     public Job BatchJob(){
         return jobBuilderFactory.get("BatchJob")
                 .incrementer(new RunIdIncrementer())
-                .start(step1())
+                .start(flowStep())
                 .next(step2())
                 .next(step3())
                 .build();
+    }
+
+    private Step flowStep(){
+        //Step을 만드는 방식으로 StepBilder를 사용하여 만드는데
+        //flow() 메서드를 사용
+        return stepBuilderFactory.get("flowStep")
+                .flow(flow())
+                .build();
+    }
+
+    private Flow flow(){
+        FlowBuilder<Flow> flowFlowBuilder = new FlowBuilder<>("flow");
+
+        flowFlowBuilder.start(step1())
+                .end();
+        return  flowFlowBuilder.build();
     }
     @Bean
     public Step step2() {

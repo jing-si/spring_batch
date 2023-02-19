@@ -33,7 +33,7 @@ spring:
       initialize-schema: never
     job:
       enabled: true
-  —
+---
 spring:
   config:
     activate:

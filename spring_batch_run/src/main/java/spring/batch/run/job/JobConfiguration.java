@@ -39,7 +39,7 @@ public class JobConfiguration {
     public Step step1(){
         return stepBuilderFactory.get("step1")
                 //<>는 input, output 타입을 정하기 위한 것
-                .<String,String>chunk(5)
+                .<String,String>chunk(3)
                 .reader(new ListItemReader<>(Arrays.asList("item1","item2","item3","item4","item5","item6")))
                 .processor(new ItemProcessor<String, String>() {
                     @Override

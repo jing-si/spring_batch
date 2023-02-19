@@ -9,15 +9,24 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.database.JdbcPagingItemReader;
+import org.springframework.batch.item.database.Order;
+import org.springframework.batch.item.database.support.MySqlPagingQueryProvider;
 import org.springframework.batch.repeat.RepeatStatus;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import javax.sql.DataSource;
+import java.util.HashMap;
+import java.util.Map;
 
 @RequiredArgsConstructor
 @Configuration
 public class JobConfiguration {
     private final JobBuilderFactory jobBuilderFactory;
     private final StepBuilderFactory stepBuilderFactory;
+    private final DataSource dataSource;
 
     @Bean
     public Job BatchJob(){
@@ -44,17 +53,45 @@ public class JobConfiguration {
     @Bean
     public Step step1(){
         return stepBuilderFactory.get("step1")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("=======================");
-                        System.out.println(">>step1  Batch!!");
-                        System.out.println("=======================");
-                        return RepeatStatus.FINISHED;
-                    }
-                }).build();
+                .chunk(100)
+                .reader(pagingItemReader())
+                .writer(customItemWriter())
+                .build();
 
     }
+
+    @Bean
+    public Step asyncStep1(){
+        return stepBuilderFactory.get("asyncStep1")
+                .chunk(100)
+                .reader(pagingItemReader())
+                .build();
+
+    }
+
+    @Bean
+    public JdbcPagingItemReader<Customer> pagingItemReader(){
+        JdbcPagingItemReader<Customer> reader = new JdbcPagingItemReader<Customer>();
+
+        reader.setDataSource(this.dataSource);
+        reader.setFetchSize(300);
+        reader.setRowMapper(new CusomerRowMapper());
+
+        MySqlPagingQueryProvider queryProvider = new MySqlPagingQueryProvider();
+        queryProvider.setSelectClause("id, firstName, lastName, birthdate");
+        queryProvider.setFromClause("from customer");
+
+        Map<String, Order> sortKeys = new HashMap<>(1);
+
+        sortKeys.put("id",Order.ASCENDING);
+
+        queryProvider.setSortKeys(sortKeys);
+
+        reader.setQueryProvider(queryProvider);
+
+        return reader;
+    }
+
     @Bean
     public Step step3(){
         return stepBuilderFactory.get("step3")

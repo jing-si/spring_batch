@@ -42,8 +42,8 @@ public class JobConfiguration {
     public Job BatchJob() throws InterruptedException {
         return jobBuilderFactory.get("BatchJob")
                 .incrementer(new RunIdIncrementer())
-                //.start(step1())
-                .start(step2())
+                .start(step1())
+                //.start(step2())
                 .listener(new StopWatchJobListener())
                 .build();
     }
@@ -54,18 +54,36 @@ public class JobConfiguration {
         return stepBuilderFactory.get("step1")
                 .<Customer,Customer>chunk(100)
                 .reader(pagingItemReader())
+                .listener(new CustomItemReadListener())
                 .processor(customItemProcessor())
+                .listener(new CustomItemProcessListener())
                 .writer(customItemWriter())
+                .listener(new CustomItemWriterListener())
+                .taskExecutor(taskExecutor())
                 .build();
 
     }
+    @Bean
+    public TaskExecutor taskExecutor(){
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        //몇개의 쓰레드를 처리 할 것인지
+        taskExecutor.setCorePoolSize(8);
+        //몇개의 쓰레드를 생성 할 것인지
+        taskExecutor.setMaxPoolSize(16);
+        taskExecutor.setThreadNamePrefix("async-thread");
+        return taskExecutor;
+    }
+
     @Bean
     public Step step2() throws InterruptedException {
         return stepBuilderFactory.get("asyncStep1")
                 .<Customer,Customer>chunk(100)
                 .reader(pagingItemReader())
+
                 .processor(asyncItemProcessor())
+
                 .writer(asyncItemWriter())
+
                 .build();
 
     }
@@ -79,7 +97,6 @@ public class JobConfiguration {
             @Override
             public Customer process(Customer item) throws Exception {
                 Thread.sleep(30);
-                System.out.println("process!!");
                 return new Customer(item.getId(), item.getFirstname().toUpperCase()
                 ,item.getLastname().toUpperCase(),item.getBirthdate());
             }

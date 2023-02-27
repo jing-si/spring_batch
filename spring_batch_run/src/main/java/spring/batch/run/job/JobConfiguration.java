@@ -9,9 +9,14 @@ import org.springframework.batch.core.configuration.annotation.StepBuilderFactor
 import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
+import org.springframework.batch.item.ItemReader;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @RequiredArgsConstructor
 @Configuration
@@ -29,6 +34,30 @@ public class JobConfiguration {
                 .build();
     }
     @Bean
+    public Step step1(){
+        return stepBuilderFactory.get("step1")
+                .<String,String>chunk(5)
+                .reader(itemReader())
+                .writer(itemWriter())
+                .build();
+
+    }
+
+    @Bean
+    public CustomItemWriter itemWriter() {
+        return new CustomItemWriter();
+    }
+
+    @Bean
+    public CustomItemStreamReader itemReader() {
+        List<String> items = new ArrayList<>(10);
+        for(int i = 0; i<= 10 ; i++){
+            items.add(String.valueOf(i));
+        }
+        return new CustomItemStreamReader(items);
+    }
+
+    @Bean
     public Step step2() {
         return stepBuilderFactory.get("step2")
                 .tasklet((stepContribution, chunkContext) -> {
@@ -41,20 +70,7 @@ public class JobConfiguration {
                 }).build();
     }
 
-    @Bean
-    public Step step1(){
-        return stepBuilderFactory.get("step1")
-                .tasklet(new Tasklet() {
-                    @Override
-                    public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-                        System.out.println("=======================");
-                        System.out.println(">>step1  Batch!!");
-                        System.out.println("=======================");
-                        return RepeatStatus.FINISHED;
-                    }
-                }).build();
 
-    }
     @Bean
     public Step step3(){
         return stepBuilderFactory.get("step3")
